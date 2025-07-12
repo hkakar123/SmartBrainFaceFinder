@@ -1,0 +1,14 @@
+.face-recognition-container {
+  position: relative;
+  display: inline-block;
+}
+
+.bounding-box {
+  position: absolute;
+  box-shadow: 0 0 0 3px #149df2 inset;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  z-index: 20;
+}
