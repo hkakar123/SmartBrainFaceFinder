@@ -22,12 +22,21 @@ const db = knex({
 const app = express();
 
 app.use(bodyParser.json());
-app.use(cors({
-  origin: 'https://smartbrainfacefinder-qqf8.onrender.com',
-  methods: ['GET', 'POST', 'PUT'],
-  credentials: true
-}));
+const whitelist = ['https://smartbrainfacefinder-qqf8.onrender.com'];
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: 'GET,POST,PUT',
+  allowedHeaders: ['Content-Type']
+};
 
+app.use(cors(corsOptions));
 
 app.get('/', (req, res) => {
   res.send('success');
