@@ -22,7 +22,12 @@ const db = knex({
 const app = express();
 
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors({
+  origin: 'https://smartbrainfacefinder-qqf8.onrender.com',
+  methods: ['GET', 'POST', 'PUT'],
+  credentials: true
+}));
+
 
 app.get('/', (req, res) => {
   res.send('success');
