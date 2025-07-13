@@ -49,7 +49,7 @@ class Register extends React.Component {
     return;
   }
 
-  fetch('http://localhost:3000/register', {
+  fetch('https://smartbrainbackend-x9af.onrender.com/register', {
     method: 'post',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

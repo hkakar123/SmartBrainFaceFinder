@@ -10,7 +10,7 @@ import { loadSlim } from "@tsparticles/slim";
 import './App.css';
 import FaceRecognition from './components/FaceRecognition/FaceRecognition';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000';
+const API_BASE_URL = 'https://smartbrainbackend-x9af.onrender.com';
 
 class App extends Component {
   constructor(props) {

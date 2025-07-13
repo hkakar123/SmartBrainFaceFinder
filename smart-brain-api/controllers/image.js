@@ -1,6 +1,6 @@
-const fetch = require('node-fetch');
+import fetch from 'node-fetch';
 
-const handleApiCall = (req, res) => {
+export const handleApiCall = (req, res) => {
   const IMAGE_URL = req.body.input;
 
   if (!IMAGE_URL || IMAGE_URL.trim() === '') {
@@ -45,7 +45,7 @@ const handleApiCall = (req, res) => {
     });
 };
 
-const handleImage = (req, res, db) => {
+export const handleImage = (req, res, db) => {
   const { id } = req.body;
 
   if (!id) {
@@ -63,9 +63,4 @@ const handleImage = (req, res, db) => {
       console.error('Database error:', err);
       res.status(400).json('Unable to get entries');
     });
-};
-
-module.exports = {
-  handleApiCall,
-  handleImage
 };

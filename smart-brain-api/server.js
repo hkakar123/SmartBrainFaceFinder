@@ -1,33 +1,36 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const bcrypt = require('bcrypt-nodejs');  
-const cors = require('cors');
-const fetch = require('node-fetch');
-const app = express();
-const knex = require('knex');
+import express from 'express';
+import bodyParser from 'body-parser';
+import bcrypt from 'bcrypt-nodejs';
+import cors from 'cors';
+import fetch from 'node-fetch';
+import knex from 'knex';
 
-const profile = require('./controllers/profile');
-const image = require('./controllers/image');
+import { handleProfileGet } from './controllers/profile.js';
+import { handleApiCall, handleImage } from './controllers/image.js';
 
 const db = knex({
   client: 'pg',
   connection: {
-    host: '127.0.0.1', 
-    user: 'postgres',
-    password: 'test',
-    database: 'smart-brain'
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    },
+    host: process.env.DATABASE_HOST,
+    port: 5432,
+    user: process.env.DATABASE_USER,
+    password: process.env.DATABASE_PW,
+    database: process.env.DATABASE_DB
   }
 });
 
-
+const app = express();
 
 app.use(bodyParser.json());
-app.use(cors());  // Make sure cors is before routes
+app.use(cors());
 
 app.get('/', (req, res) => {
   res.send('success');
 });
-
 
 app.post('/signin', (req, res) => {
   const { email, password } = req.body;
@@ -51,7 +54,6 @@ app.post('/signin', (req, res) => {
     .catch(() => res.status(400).json('Wrong credentials'));
 });
 
-// REGISTER route
 app.post('/register', (req, res) => {
   const { email, name, password } = req.body;
   if (!email || !name || !password) return res.status(400).json('Incorrect form submission');
@@ -83,12 +85,17 @@ app.post('/register', (req, res) => {
   .catch(() => res.status(400).json('Unable to register'));
 });
 
+app.get('/profile/:id', (req, res) => {
+  handleProfileGet(req, res, db);
+});
 
-app.get('/profile/:id', (req, res) => {profile.handleProfileGet(req, res, db)});
+app.post('/imageurl', (req, res) => {
+  handleApiCall(req, res);
+});
 
-app.post('/imageurl', (req, res) => image.handleApiCall(req, res));
-
-app.put('/image', (req, res) => image.handleImage(req, res, db));
+app.put('/image', (req, res) => {
+  handleImage(req, res, db);
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
