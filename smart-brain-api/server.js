@@ -66,7 +66,12 @@ app.post('/signin', (req, res) => {
 
 app.post('/register', (req, res) => {
   const { email, name, password } = req.body;
-  if (!email || !name || !password) return res.status(400).json('Incorrect form submission');
+  console.log('Registering:', req.body); // ⬅️ log incoming data
+
+  if (!email || !name || !password) {
+    console.log('❌ Missing field:', { email, name, password });
+    return res.status(400).json('Incorrect form submission');
+  }
 
   const hash = bcrypt.hashSync(password);
 
@@ -86,14 +91,22 @@ app.post('/register', (req, res) => {
           joined: new Date()
         })
         .then(user => {
+          console.log('✅ Registered user:', user[0]);
           res.json(user[0]);
         });
     })
     .then(trx.commit)
-    .catch(trx.rollback);
+    .catch(err => {
+      console.log('❌ Error inserting user:', err);
+      trx.rollback();
+    });
   })
-  .catch(() => res.status(400).json('Unable to register'));
+  .catch(err => {
+    console.log('❌ Transaction error:', err);
+    res.status(400).json('Unable to register');
+  });
 });
+
 
 app.get('/profile/:id', (req, res) => {
   handleProfileGet(req, res, db);
