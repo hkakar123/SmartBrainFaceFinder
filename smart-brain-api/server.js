@@ -68,7 +68,7 @@ app.post('/signin', (req, res) => {
 
 app.post('/register', (req, res) => {
   const { email, name, password } = req.body;
-  console.log('Registering:', req.body); // ⬅️ log incoming data
+  console.log('Registering:', req.body);
 
   if (!email || !name || !password) {
     console.log('❌ Missing field:', { email, name, password });
@@ -83,12 +83,13 @@ app.post('/register', (req, res) => {
       email: email
     })
     .into('login')
-    .returning('email')
-    .then(loginEmail => {
+    .returning('*')
+    .then(loginRows => {
+      const loginEmail = loginRows[0].email;
       return trx('users')
         .returning('*')
         .insert({
-          email: loginEmail[0].email,
+          email: loginEmail,
           name: name,
           joined: new Date()
         })
@@ -108,6 +109,7 @@ app.post('/register', (req, res) => {
     res.status(400).json('Unable to register');
   });
 });
+
 
 
 app.get('/profile/:id', (req, res) => {
