@@ -2,7 +2,7 @@ import React from 'react';
 
 class Register extends React.Component {
   constructor(props) {
-    super();
+    super(props);
     this.state = {
       email: '',
       password: '',
@@ -49,18 +49,24 @@ class Register extends React.Component {
     return;
   }
 
+  // ✅ Add this log
+  console.log('Registering with:', {
+    name,
+    email,
+    password
+  });
+
   fetch('https://smartbrainbackend-x9af.onrender.com/register', {
     method: 'post',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email: email,
-      password: password,
-      name: name
+      email,
+      password,
+      name
     })
   })
     .then(response => response.json())
     .then(user => {
-      // ✅ This is the key correction:
       if (user.id) {
         this.props.loadUser(user);
         this.props.onRouteChange('home');
