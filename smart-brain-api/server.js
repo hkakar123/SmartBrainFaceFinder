@@ -21,7 +21,9 @@ const db = knex({
 
 const app = express();
 
-app.use(bodyParser.json());
+//app.use(bodyParser.json());
+app.use(express.json());
+
 const whitelist = ['https://smartbrainfacefinder-qqf8.onrender.com'];
 const corsOptions = {
   origin: function (origin, callback) {
