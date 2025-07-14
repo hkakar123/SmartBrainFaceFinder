@@ -113,7 +113,7 @@ app.post('/register', async (req, res) => {
 
   let { email, name, password } = req.body;
 
-  // Fix email if it's wrapped as object
+  // Fix if email is sent as an object like: { email: { email: "something" } }
   if (typeof email !== 'string' && email.email) {
     email = email.email;
   }
@@ -131,10 +131,15 @@ app.post('/register', async (req, res) => {
         .insert({ hash: hash, email: email })
         .returning('email');
 
-      if (!loginEmail.length) throw new Error('No email returned');
+      // ✅ FIX: extract the email string from the returned object
+      const plainEmail = loginEmail[0].email;
 
       const userRows = await trx('users')
-        .insert({ email: loginEmail[0], name: name, joined: new Date() })
+        .insert({
+          email: plainEmail,
+          name: name,
+          joined: new Date()
+        })
         .returning('*');
 
       if (!userRows.length) throw new Error('No user returned');
