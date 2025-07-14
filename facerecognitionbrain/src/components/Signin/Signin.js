@@ -52,7 +52,6 @@ class Signin extends React.Component {
       .catch(error => {
         console.error('Sign in error:', error.message);
         this.setState({ error: error.message });
-        alert(error.message);
       });
   }
 
