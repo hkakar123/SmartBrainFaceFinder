@@ -10,12 +10,12 @@ import { handleApiCall, handleImage } from './controllers/image.js';
 
 const db = knex({
   client: 'pg',
-  connection: {
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
-  }
+  connection: process.env.DATABASE_URL,
+  searchPath: ['public'],
+});
+
+db.client.pool.on('error', (err) => {
+  console.error('Postgres pool error', err);
 });
 
 db.on('error', (err) => {
@@ -61,7 +61,7 @@ app.post('/signin', (req, res) => {
     .catch(() => res.status(400).json('Wrong credentials'));
 });
 
-app.post('/register', (req, res) => {
+app.post('/register', async (req, res) => {
   console.log('🔥 /register hit with body:', req.body);
 
   const { email, name, password } = req.body;
@@ -71,50 +71,31 @@ app.post('/register', (req, res) => {
     return res.status(400).json('Incorrect form submission');
   }
 
-  // DB test:
-  db.select('*').from('users').limit(1)
-    .then(data => console.log('Users table sample:', data))
-    .catch(err => {
-      console.log('DB error during test:', err);
-      return res.status(500).json('DB connection error');
-    });
-
   const hash = bcrypt.hashSync(password);
 
-  db.transaction(trx => {
-    trx.insert({
-      hash: hash,
-      email: email
-    })
-      .into('login')
-      .returning('email')
-      .then(loginEmail => {
-        console.log('Login inserted email:', loginEmail);
-        return trx('users')
-          .returning('*')
-          .insert({
-            email: loginEmail[0],
-            name: name,
-            joined: new Date()
-          })
-          .then(user => {
-            console.log('✅ Registered user:', user[0]);
-            res.json(user[0]);
-          });
-      })
-      .then(() => {
-        console.log('Committing transaction');
-        return trx.commit();
-      })
-      .catch(err => {
-        console.log('❌ Transaction insert error:', err);
-        trx.rollback();
-        res.status(400).json('Unable to register');
-      });
-  }).catch(err => {
-    console.log('❌ DB error:', err);
-    res.status(400).json('Unable to register');
-  });
+  try {
+    const user = await db.transaction(async trx => {
+      const loginEmail = await trx('login')
+        .insert({ hash: hash, email: email })
+        .returning('email');
+
+      if (!loginEmail.length) throw new Error('No email returned');
+
+      const userRows = await trx('users')
+        .insert({ email: loginEmail[0], name: name, joined: new Date() })
+        .returning('*');
+
+      if (!userRows.length) throw new Error('No user returned');
+
+      return userRows[0];
+    });
+
+    console.log('✅ Registered user:', user);
+    return res.json(user);
+  } catch (err) {
+    console.error('❌ Register error:', err);
+    return res.status(500).json('Unable to register');
+  }
 });
 
 
