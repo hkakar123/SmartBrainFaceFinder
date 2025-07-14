@@ -24,7 +24,11 @@ const app = express();
 //app.use(bodyParser.json());
 app.use(express.json());
 
-app.use(cors()); // allow all origins (remove this before production)
+app.use(cors({
+  origin: 'https://smartbrainfacefinder-qqf8.onrender.com',
+  methods: ['GET', 'POST', 'PUT'],
+  allowedHeaders: ['Content-Type'],
+}));
 
 app.get('/', (req, res) => {
   res.send('success');
@@ -53,8 +57,9 @@ app.post('/signin', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
+  console.log('🔥 /register hit with body:', req.body);
+
   const { email, name, password } = req.body;
-  console.log('Registering:', req.body);
 
   if (!email || !name || !password) {
     console.log('❌ Missing field:', { email, name, password });
@@ -68,40 +73,33 @@ app.post('/register', (req, res) => {
       hash: hash,
       email: email
     })
-    .into('login')
-    .returning('*')
-    .then(loginRows => {
-      if (loginRows.length === 0) {
-        throw new Error('Login insertion failed: no rows returned');
-      }
-      const loginEmail = loginRows[0].email;
-      return trx('users')
-        .returning('*')
-        .insert({
-          email: loginEmail,
-          name: name,
-          joined: new Date()
-        });
-    })
-    .then(userRows => {
-      if (userRows.length === 0) {
-        throw new Error('User insertion failed: no rows returned');
-      }
-      console.log('✅ Registered user:', userRows[0]);
-      res.json(userRows[0]);
-      return trx.commit;
-    })
-    .catch(err => {
-      console.log('❌ Error inserting user:', err);
-      trx.rollback();
-      res.status(400).json('Unable to register');
-    });
-  })
-  .catch(err => {
-    console.log('❌ Transaction error:', err);
+      .into('login')
+      .returning('email')
+      .then(loginEmail => {
+        return trx('users')
+          .returning('*')
+          .insert({
+            email: loginEmail[0],
+            name: name,
+            joined: new Date()
+          })
+          .then(user => {
+            console.log('✅ Registered user:', user[0]);
+            res.json(user[0]);
+          });
+      })
+      .then(() => trx.commit()) // ✅ FIXED: Call commit
+      .catch(err => {
+        console.log('❌ Transaction insert error:', err);
+        trx.rollback();
+        res.status(400).json('Unable to register');
+      });
+  }).catch(err => {
+    console.log('❌ DB error:', err);
     res.status(400).json('Unable to register');
   });
 });
+
 
 
 
