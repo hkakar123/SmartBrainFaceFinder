@@ -11,14 +11,20 @@ import { handleApiCall, handleImage } from './controllers/image.js';
 // ✅ First: initialize express app
 const app = express();
 
-// ✅ Now define DB connection
 const db = knex({
   client: 'pg',
   connection: {
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    ssl: { rejectUnauthorized: false, require: true }
   },
+  pool: {
+    min: 2,
+    max: 10,
+    idleTimeoutMillis: 10000,
+    acquireTimeoutMillis: 10000,
+  }
 });
+
 
 // Optional: log DB errors
 db.client.pool.on('error', (err) => {
