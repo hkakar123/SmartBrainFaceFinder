@@ -70,20 +70,43 @@ app.post('/signin', (req, res) => {
   db.select('email', 'hash').from('login')
     .where('email', '=', email)
     .then(data => {
-      if (data.length && bcrypt.compareSync(password, data[0].hash)) {
-        return db.select('*').from('users')
-          .where('email', '=', email)
-          .then(user => {
-            if (user.length) res.json(user[0]);
-            else res.status(400).json('Unable to get user');
-          })
-          .catch(() => res.status(400).json('Unable to get user'));
+      console.log('Signin DB data:', data); // <-- log fetched login data
+
+      if (data.length) {
+        const isValid = bcrypt.compareSync(password, data[0].hash);
+        console.log('Password valid:', isValid); // <-- log bcrypt result
+
+        if (isValid) {
+          return db.select('*').from('users')
+            .where('email', '=', email)
+            .then(user => {
+              if (user.length) {
+                console.log('User found:', user[0]);
+                res.json(user[0]);
+              } else {
+                console.log('User not found');
+                res.status(400).json('Unable to get user');
+              }
+            })
+            .catch(err => {
+              console.error('User select error:', err);
+              res.status(400).json('Unable to get user');
+            });
+        } else {
+          console.log('Password does not match');
+          res.status(400).json('Wrong credentials');
+        }
       } else {
+        console.log('No login data found for email');
         res.status(400).json('Wrong credentials');
       }
     })
-    .catch(() => res.status(400).json('Wrong credentials'));
+    .catch(err => {
+      console.error('Signin DB error:', err);
+      res.status(400).json('Wrong credentials');
+    });
 });
+
 
 // ✅ Register route
 app.post('/register', async (req, res) => {
