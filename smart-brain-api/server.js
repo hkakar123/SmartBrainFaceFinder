@@ -18,6 +18,11 @@ const db = knex({
   }
 });
 
+db.on('error', (err) => {
+  console.error('Knex DB connection error:', err);
+});
+
+
 
 const app = express();
 
@@ -66,6 +71,14 @@ app.post('/register', (req, res) => {
     return res.status(400).json('Incorrect form submission');
   }
 
+  // DB test:
+  db.select('*').from('users').limit(1)
+    .then(data => console.log('Users table sample:', data))
+    .catch(err => {
+      console.log('DB error during test:', err);
+      return res.status(500).json('DB connection error');
+    });
+
   const hash = bcrypt.hashSync(password);
 
   db.transaction(trx => {
@@ -76,6 +89,7 @@ app.post('/register', (req, res) => {
       .into('login')
       .returning('email')
       .then(loginEmail => {
+        console.log('Login inserted email:', loginEmail);
         return trx('users')
           .returning('*')
           .insert({
@@ -88,7 +102,10 @@ app.post('/register', (req, res) => {
             res.json(user[0]);
           });
       })
-      .then(() => trx.commit()) // ✅ FIXED: Call commit
+      .then(() => {
+        console.log('Committing transaction');
+        return trx.commit();
+      })
       .catch(err => {
         console.log('❌ Transaction insert error:', err);
         trx.rollback();
@@ -99,8 +116,6 @@ app.post('/register', (req, res) => {
     res.status(400).json('Unable to register');
   });
 });
-
-
 
 
 
