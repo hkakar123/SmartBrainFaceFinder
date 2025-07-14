@@ -15,7 +15,7 @@ const db = knex({
     ssl: { rejectUnauthorized: false },
   },
 });
-s
+
 
 db.client.pool.on('error', (err) => {
   console.error('Postgres pool error', err);
