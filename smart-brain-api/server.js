@@ -8,20 +8,22 @@ import knex from 'knex';
 import { handleProfileGet } from './controllers/profile.js';
 import { handleApiCall, handleImage } from './controllers/image.js';
 
-// ✅ First: initialize express app
-const app = express();
+console.log('📌 DATABASE_URL:', process.env.DATABASE_URL);
+
 
 const db = knex({
   client: 'pg',
   connection: {
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false, require: true }
+    ssl: {
+      rejectUnauthorized: false,
+    }
   },
   pool: {
     min: 2,
     max: 10,
     idleTimeoutMillis: 10000,
-    acquireTimeoutMillis: 10000,
+    acquireTimeoutMillis: 10000
   }
 });
 
