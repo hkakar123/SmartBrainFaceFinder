@@ -8,40 +8,46 @@ import knex from 'knex';
 import { handleProfileGet } from './controllers/profile.js';
 import { handleApiCall, handleImage } from './controllers/image.js';
 
+// ✅ Log DATABASE_URL at the top for debugging
 console.log('📌 DATABASE_URL:', process.env.DATABASE_URL);
 
-
+// ✅ Set up knex DB connection
 const db = knex({
   client: 'pg',
   connection: {
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false,
-    }
+    ssl: { rejectUnauthorized: false },
   },
   pool: {
     min: 2,
     max: 10,
     idleTimeoutMillis: 10000,
-    acquireTimeoutMillis: 10000
-  }
+    acquireTimeoutMillis: 10000,
+  },
 });
 
-
-// Optional: log DB errors
+// Optional: Listen for DB connection errors
 db.client.pool.on('error', (err) => {
-  console.error('Postgres pool error', err);
+  console.error('Postgres pool error:', err);
 });
 
-db.on('error', (err) => {
-  console.error('Knex DB connection error:', err);
-});
+// ✅ Express app setup
+const app = express();
 
-// ✅ Test routes
+// Middleware
+app.use(express.json());
+app.use(cors({
+  origin: 'https://smartbrainfacefinder-qqf8.onrender.com',
+  methods: ['GET', 'POST', 'PUT'],
+  allowedHeaders: ['Content-Type'],
+}));
+
+// ✅ Test route: See if env var is present
 app.get('/env', (req, res) => {
   res.json({ databaseUrl: process.env.DATABASE_URL || 'NOT SET' });
 });
 
+// ✅ Test route: Check DB connection
 app.get('/testdb', async (req, res) => {
   try {
     const result = await db.raw('SELECT NOW()');
@@ -51,21 +57,12 @@ app.get('/testdb', async (req, res) => {
   }
 });
 
-// Middleware
-app.use(express.json());
-
-app.use(cors({
-  origin: 'https://smartbrainfacefinder-qqf8.onrender.com',
-  methods: ['GET', 'POST', 'PUT'],
-  allowedHeaders: ['Content-Type'],
-}));
-
-// Root
+// ✅ Basic route
 app.get('/', (req, res) => {
   res.send('success');
 });
 
-// Signin
+// ✅ Sign in route
 app.post('/signin', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json('Incorrect form submission');
@@ -88,12 +85,11 @@ app.post('/signin', (req, res) => {
     .catch(() => res.status(400).json('Wrong credentials'));
 });
 
-// Register
+// ✅ Register route
 app.post('/register', async (req, res) => {
   console.log('🔥 /register hit with body:', req.body);
 
   const { email, name, password } = req.body;
-
   if (!email || !name || !password) {
     console.log('❌ Missing field:', { email, name, password });
     return res.status(400).json('Incorrect form submission');
@@ -126,11 +122,12 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// Other routes
+// ✅ Profile route
 app.get('/profile/:id', (req, res) => {
   handleProfileGet(req, res, db);
 });
 
+// ✅ Image routes
 app.post('/imageurl', (req, res) => {
   handleApiCall(req, res);
 });
@@ -139,8 +136,8 @@ app.put('/image', (req, res) => {
   handleImage(req, res, db);
 });
 
-// Start server
+// ✅ Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
