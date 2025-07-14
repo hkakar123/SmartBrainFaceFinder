@@ -108,11 +108,16 @@ app.post('/signin', (req, res) => {
 });
 
 
-// ✅ Register route
 app.post('/register', async (req, res) => {
   console.log('🔥 /register hit with body:', req.body);
 
-  const { email, name, password } = req.body;
+  let { email, name, password } = req.body;
+
+  // Fix email if it's wrapped as object
+  if (typeof email !== 'string' && email.email) {
+    email = email.email;
+  }
+
   if (!email || !name || !password) {
     console.log('❌ Missing field:', { email, name, password });
     return res.status(400).json('Incorrect form submission');
@@ -144,6 +149,7 @@ app.post('/register', async (req, res) => {
     return res.status(500).json('Unable to register');
   }
 });
+
 
 // ✅ Profile route
 app.get('/profile/:id', (req, res) => {
