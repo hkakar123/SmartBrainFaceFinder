@@ -10,9 +10,12 @@ import { handleApiCall, handleImage } from './controllers/image.js';
 
 const db = knex({
   client: 'pg',
-  connection: process.env.DATABASE_URL,
-  searchPath: ['public'],
+  connection: {
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  },
 });
+s
 
 db.client.pool.on('error', (err) => {
   console.error('Postgres pool error', err);
@@ -21,6 +24,22 @@ db.client.pool.on('error', (err) => {
 db.on('error', (err) => {
   console.error('Knex DB connection error:', err);
 });
+
+// Test: check if DATABASE_URL is present
+app.get('/env', (req, res) => {
+  res.json({ databaseUrl: process.env.DATABASE_URL || 'NOT SET' });
+});
+
+// Test: check if the database connection works
+app.get('/testdb', async (req, res) => {
+  try {
+    const result = await db.raw('SELECT NOW()');
+    res.json({ dbTime: result.rows[0].now });
+  } catch (err) {
+    res.status(500).json({ error: 'Database connection failed', details: err.message });
+  }
+});
+
 
 
 
