@@ -8,6 +8,10 @@ import knex from 'knex';
 import { handleProfileGet } from './controllers/profile.js';
 import { handleApiCall, handleImage } from './controllers/image.js';
 
+// ✅ First: initialize express app
+const app = express();
+
+// ✅ Now define DB connection
 const db = knex({
   client: 'pg',
   connection: {
@@ -16,7 +20,7 @@ const db = knex({
   },
 });
 
-
+// Optional: log DB errors
 db.client.pool.on('error', (err) => {
   console.error('Postgres pool error', err);
 });
@@ -25,12 +29,11 @@ db.on('error', (err) => {
   console.error('Knex DB connection error:', err);
 });
 
-// Test: check if DATABASE_URL is present
+// ✅ Test routes
 app.get('/env', (req, res) => {
   res.json({ databaseUrl: process.env.DATABASE_URL || 'NOT SET' });
 });
 
-// Test: check if the database connection works
 app.get('/testdb', async (req, res) => {
   try {
     const result = await db.raw('SELECT NOW()');
@@ -40,12 +43,7 @@ app.get('/testdb', async (req, res) => {
   }
 });
 
-
-
-
-const app = express();
-
-//app.use(bodyParser.json());
+// Middleware
 app.use(express.json());
 
 app.use(cors({
@@ -54,10 +52,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type'],
 }));
 
+// Root
 app.get('/', (req, res) => {
   res.send('success');
 });
 
+// Signin
 app.post('/signin', (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json('Incorrect form submission');
@@ -80,6 +80,7 @@ app.post('/signin', (req, res) => {
     .catch(() => res.status(400).json('Wrong credentials'));
 });
 
+// Register
 app.post('/register', async (req, res) => {
   console.log('🔥 /register hit with body:', req.body);
 
@@ -117,8 +118,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-
-
+// Other routes
 app.get('/profile/:id', (req, res) => {
   handleProfileGet(req, res, db);
 });
@@ -131,6 +131,7 @@ app.put('/image', (req, res) => {
   handleImage(req, res, db);
 });
 
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`running on port ${PORT}`);
