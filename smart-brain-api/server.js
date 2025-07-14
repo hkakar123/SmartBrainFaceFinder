@@ -24,21 +24,7 @@ const app = express();
 //app.use(bodyParser.json());
 app.use(express.json());
 
-const whitelist = ['https://smartbrainfacefinder-qqf8.onrender.com'];
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: 'GET,POST,PUT',
-  allowedHeaders: ['Content-Type']
-};
-
-app.use(cors(corsOptions));
+app.use(cors()); // allow all origins (remove this before production)
 
 app.get('/', (req, res) => {
   res.send('success');
