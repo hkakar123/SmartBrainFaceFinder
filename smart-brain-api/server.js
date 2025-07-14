@@ -71,6 +71,9 @@ app.post('/register', (req, res) => {
     .into('login')
     .returning('*')
     .then(loginRows => {
+      if (loginRows.length === 0) {
+        throw new Error('Login insertion failed: no rows returned');
+      }
       const loginEmail = loginRows[0].email;
       return trx('users')
         .returning('*')
@@ -78,16 +81,20 @@ app.post('/register', (req, res) => {
           email: loginEmail,
           name: name,
           joined: new Date()
-        })
-        .then(user => {
-          console.log('✅ Registered user:', user[0]);
-          res.json(user[0]);
         });
     })
-    .then(trx.commit)
+    .then(userRows => {
+      if (userRows.length === 0) {
+        throw new Error('User insertion failed: no rows returned');
+      }
+      console.log('✅ Registered user:', userRows[0]);
+      res.json(userRows[0]);
+      return trx.commit;
+    })
     .catch(err => {
       console.log('❌ Error inserting user:', err);
       trx.rollback();
+      res.status(400).json('Unable to register');
     });
   })
   .catch(err => {
@@ -95,6 +102,7 @@ app.post('/register', (req, res) => {
     res.status(400).json('Unable to register');
   });
 });
+
 
 
 
